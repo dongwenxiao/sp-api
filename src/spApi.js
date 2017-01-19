@@ -2,7 +2,7 @@ import { spMongoDB } from 'sp-mongo'
 import cors from 'sp-cors-middleware'
 import Router from 'koa-router'
 
-export default class ApiFactory {
+export default class spApi {
     /**
      * Creates an instance of ApiFactory.
      * 
@@ -46,7 +46,7 @@ export default class ApiFactory {
         this.rootRouter.use(apiRouter)
     }
 
-    addApi(collection) {
+    add(collection) {
 
         let collectionName
 
@@ -202,7 +202,7 @@ export default class ApiFactory {
             })
     }
 
-    deleteApi(collectionName) {
+    delete(collectionName) {
 
     }
 

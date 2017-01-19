@@ -1,1 +1,1 @@
-export ApiFactory from './src/ApiFactory'
+export spApi from './src/spApi'
