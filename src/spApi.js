@@ -3,12 +3,13 @@ import cors from 'sp-cors-middleware'
 import Router from 'koa-router'
 
 export default class spApi {
+
     /**
      * Creates an instance of ApiFactory.
-     * 
+     *
      * @param {any} opt {ip: '', port: '', db: '', prefix: ''} 连接mongodb需要的信息
      * @param {any} router 包含 .use() 方法的对象
-     * 
+     *
      * @memberOf ApiFactory
      */
     constructor(opt, router) {
@@ -36,8 +37,8 @@ export default class spApi {
 
     /**
      * 挂载到主路由上
-     * 
-     * 
+     *
+     *
      * @memberOf ApiFactory
      */
     mount() {
@@ -58,7 +59,7 @@ export default class spApi {
 
         this.router
             .options('*', cors, async(ctx) => {
-                ctx.status = 204;
+                ctx.status = 204
             })
             .get(`/${collectionName}`, cors, async(ctx) => {
 
@@ -74,27 +75,27 @@ export default class spApi {
                 // }
 
                 let _query = {},
-                    _skip = undefined,
-                    _limit = undefined,
-                    _filter = undefined
+                    _skip,
+                    _limit,
+                    _filter
 
                 for (let key in ctx.query) {
-                    if (key == 'skip') {
+                    if (key === 'skip') {
                         _skip = ctx.query[key] - 0
-                    } else if (key == 'limit') {
+                    } else if (key === 'limit') {
                         _limit = ctx.query[key] - 0
                     } else {
                         let _val = ctx.query[key]
-                        if (key.charAt(key.length - 1) == '!') {
+                        if (key.charAt(key.length - 1) === '!') {
                             key = key.slice(0, key.length - 1)
                             _query[key] = { $ne: _val }
-                        } else if (key.charAt(key.length - 1) == '>') {
+                        } else if (key.charAt(key.length - 1) === '>') {
                             key = key.slice(0, key.length - 1)
                             _query[key] = { $gt: parseInt(_val) }
-                        } else if (key.charAt(key.length - 1) == '<') {
+                        } else if (key.charAt(key.length - 1) === '<') {
                             key = key.slice(0, key.length - 1)
                             _query[key] = { $lt: _val }
-                        } else if (key.charAt(key.length - 1) == '%') {
+                        } else if (key.charAt(key.length - 1) === '%') {
                             key = key.slice(0, key.length - 1)
                             _query[key] = { $regex: _val, $options: 'i' }
                         } else {
@@ -123,7 +124,8 @@ export default class spApi {
                 ctx.body = this.response(200, result[0], '')
             })
             .post(`/${collectionName}`, cors, async(ctx) => {
-                let data = ctx.request.body;
+                let data = ctx.request.body
+
                 /*
                 // TODO 处理字段类型
                 for (let _key in data) {
@@ -150,6 +152,7 @@ export default class spApi {
                 for (let key in ctx.query) {
                     selecter[key] = ctx.query[key]
                 }
+
                 /*
                 // TODO 处理字段类型
                 for (let _key in doc) {
@@ -171,6 +174,7 @@ export default class spApi {
 
                 let selecter = { _id: ctx.params.id },
                     doc = ctx.request.body
+
                     /*
                     // TODO 处理字段类型
                     for (let _key in doc) {
@@ -202,14 +206,6 @@ export default class spApi {
             })
     }
 
-    delete(collectionName) {
-
-    }
-
-    export () {
-
-    }
-
     response(code, data, msg, type = 'json') {
         if (type === 'json') {
             return {
@@ -220,8 +216,6 @@ export default class spApi {
         }
     }
 }
-
-
 
 
 // 1 消息（1字头）
