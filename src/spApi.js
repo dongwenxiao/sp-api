@@ -48,165 +48,172 @@ export default class spApi {
     }
 
     add(collection) {
-
-        let collectionName
-
-        if (typeof collection === 'string') {
-            collectionName = collection
-        } else {
-            collectionName = collection.name
-        }
-
-        this.router
-            .options('*', cors, async(ctx) => {
-                ctx.status = 204
-            })
-            .get(`/${collectionName}`, cors, async(ctx) => {
-
-                // 请求参数
-                // {
-                //      key1: val1,   // 过滤条件
-                //      key2: val2,
-                //      skip: 5,    // 跳过5个记录
-                //      limit: 10,  // 取10个记录
-                //      filter: {   // 子集合过滤
-                //          s_key: s_val
-                //      }
-                // }
-
-                let _query = {},
-                    _skip,
-                    _limit,
-                    _filter
-
-                for (let key in ctx.query) {
-                    if (key === 'skip') {
-                        _skip = ctx.query[key] - 0
-                    } else if (key === 'limit') {
-                        _limit = ctx.query[key] - 0
-                    } else {
-                        let _val = ctx.query[key]
-                        if (key.charAt(key.length - 1) === '!') {
-                            key = key.slice(0, key.length - 1)
-                            _query[key] = { $ne: _val }
-                        } else if (key.charAt(key.length - 1) === '>') {
-                            key = key.slice(0, key.length - 1)
-                            _query[key] = { $gt: parseInt(_val) }
-                        } else if (key.charAt(key.length - 1) === '<') {
-                            key = key.slice(0, key.length - 1)
-                            _query[key] = { $lt: _val }
-                        } else if (key.charAt(key.length - 1) === '%') {
-                            key = key.slice(0, key.length - 1)
-                            _query[key] = { $regex: _val, $options: 'i' }
-                        } else {
-                            _query[key] = _val
-                        }
-                    }
-                }
-
-                const result = await this.dao.find(collectionName, {
-                    _query,
-                    _skip,
-                    _limit,
-                    _filter
-                })
-
-                ctx.body = this.response(200, result, '')
-            })
-            .get(`/${collectionName}/:id`, cors, async(ctx) => {
-
-                let _query = { _id: ctx.params.id }
-
-                const result = await this.dao.find(collectionName, {
-                    _query
-                })
-
-                ctx.body = this.response(200, result[0], '')
-            })
-            .post(`/${collectionName}`, cors, async(ctx) => {
-                let data = ctx.request.body
-
-                /*
-                // TODO 处理字段类型
-                for (let _key in data) {
-                    if (mongo.collections[collection][_key] == 'number') {
-                        data[_key] = parseInt(data[_key])
-                    }
-                }*/
-                const result = await this.dao.insert(collectionName, data)
-
-                if (result.result.ok === 1) {
-                    ctx.body = this.response(200, {
-                        id: result.insertedIds[1]
-                    }, 'success')
-                } else {
-                    ctx.body = this.response(200, {
-                        id: ''
-                    }, 'fail')
-                }
-            })
-            .put(`/${collectionName}`, cors, async(ctx) => {
-                let selecter = {},
-                    doc = ctx.request.body
-
-                for (let key in ctx.query) {
-                    selecter[key] = ctx.query[key]
-                }
-
-                /*
-                // TODO 处理字段类型
-                for (let _key in doc) {
-                    if (mongo.collections[collection][_key] == 'number') {
-                        doc[_key] = parseInt(doc[_key])
-                    }
-                }*/
-
-                const { result } = await this.dao.update(collection, selecter, doc)
-
-                if (result.ok > 0) {
-                    ctx.body = this.response(200, { affect: result.n }, 'success')
-                } else {
-                    ctx.body = this.response(200, { affect: result.n }, 'fail')
-                }
-
-            })
-            .put(`/${collectionName}/:id`, cors, async(ctx) => {
-
-                let selecter = { _id: ctx.params.id },
-                    doc = ctx.request.body
-
-                    /*
-                    // TODO 处理字段类型
-                    for (let _key in doc) {
-                        if (mongo.collections[collection][_key] == 'number') {
-                            doc[_key] = parseInt(doc[_key])
-                        }
-                    }*/
-
-                const { result } = await this.dao.update(collectionName, selecter, doc)
-
-                if (result.ok > 0) {
-                    ctx.body = this.response(200, { affect: result.n }, 'success')
-                } else {
-                    ctx.body = this.response(200, { affect: result.n }, 'fail')
-                }
-            })
-            .delete(`/${collectionName}/:id`, cors, async(ctx) => {
-
-                let selecter = { _id: ctx.params.id }
-
-                const { result } = await this.dao.delete(collectionName, selecter)
-
-                if (result.ok > 0) {
-                    ctx.body = this.repsonse(200, { affect: result.n }, 'success')
-                } else {
-                    ctx.body = this.repsonse(200, { affect: result.n }, 'fail')
-                }
-
-            })
+        mountCrudRouter(collection, this.router, this.dao)
     }
 
-    response(code, data, msg, type = 'json') {
+}
+
+export function mountCrudRouter(collection, router, dao) {
+
+    router = router || this.router
+    let collectionName
+
+    if (typeof collection === 'string') {
+        collectionName = collection
+    } else {
+        collectionName = collection.name
+    }
+
+    router
+        .options('*', cors, async(ctx) => {
+            ctx.status = 204
+        })
+        .get(`/${collectionName}`, cors, async(ctx) => {
+
+            // 请求参数
+            // {
+            //      key1: val1,   // 过滤条件
+            //      key2: val2,
+            //      skip: 5,    // 跳过5个记录
+            //      limit: 10,  // 取10个记录
+            //      filter: {   // 子集合过滤
+            //          s_key: s_val
+            //      }
+            // }
+
+            let _query = {},
+                _skip,
+                _limit,
+                _filter
+
+            for (let key in ctx.query) {
+                if (key === 'skip') {
+                    _skip = ctx.query[key] - 0
+                } else if (key === 'limit') {
+                    _limit = ctx.query[key] - 0
+                } else {
+                    let _val = ctx.query[key]
+                    if (key.charAt(key.length - 1) === '!') {
+                        key = key.slice(0, key.length - 1)
+                        _query[key] = { $ne: _val }
+                    } else if (key.charAt(key.length - 1) === '>') {
+                        key = key.slice(0, key.length - 1)
+                        _query[key] = { $gt: parseInt(_val) }
+                    } else if (key.charAt(key.length - 1) === '<') {
+                        key = key.slice(0, key.length - 1)
+                        _query[key] = { $lt: _val }
+                    } else if (key.charAt(key.length - 1) === '%') {
+                        key = key.slice(0, key.length - 1)
+                        _query[key] = { $regex: _val, $options: 'i' }
+                    } else {
+                        _query[key] = _val
+                    }
+                }
+            }
+
+            const result = await dao.find(collectionName, {
+                _query,
+                _skip,
+                _limit,
+                _filter
+            })
+
+            ctx.body = response(200, result, '')
+        })
+        .get(`/${collectionName}/:id`, cors, async(ctx) => {
+
+            let _query = { _id: ctx.params.id }
+
+            const result = await dao.find(collectionName, {
+                _query
+            })
+
+            ctx.body = response(200, result[0], '')
+        })
+        .post(`/${collectionName}`, cors, async(ctx) => {
+            let data = ctx.request.body
+
+            /*
+            // TODO 处理字段类型
+            for (let _key in data) {
+                if (mongo.collections[collection][_key] == 'number') {
+                    data[_key] = parseInt(data[_key])
+                }
+            }*/
+            const result = await dao.insert(collectionName, data)
+
+            if (result.result.ok === 1) {
+                ctx.body = response(200, {
+                    id: result.insertedIds[1]
+                }, 'success')
+            } else {
+                ctx.body = response(200, {
+                    id: ''
+                }, 'fail')
+            }
+        })
+        .put(`/${collectionName}`, cors, async(ctx) => {
+            let selecter = {},
+                doc = ctx.request.body
+
+            for (let key in ctx.query) {
+                selecter[key] = ctx.query[key]
+            }
+
+            /*
+            // TODO 处理字段类型
+            for (let _key in doc) {
+                if (mongo.collections[collection][_key] == 'number') {
+                    doc[_key] = parseInt(doc[_key])
+                }
+            }*/
+
+            const { result } = await dao.update(collection, selecter, doc)
+
+            if (result.ok > 0) {
+                ctx.body = response(200, { affect: result.n }, 'success')
+            } else {
+                ctx.body = response(200, { affect: result.n }, 'fail')
+            }
+
+        })
+        .put(`/${collectionName}/:id`, cors, async(ctx) => {
+
+            let selecter = { _id: ctx.params.id },
+                doc = ctx.request.body
+
+            /*
+            // TODO 处理字段类型
+            for (let _key in doc) {
+                if (mongo.collections[collection][_key] == 'number') {
+                    doc[_key] = parseInt(doc[_key])
+                }
+            }*/
+
+            const { result } = await dao.update(collectionName, selecter, doc)
+
+            if (result.ok > 0) {
+                ctx.body = response(200, { affect: result.n }, 'success')
+            } else {
+                ctx.body = response(200, { affect: result.n }, 'fail')
+            }
+        })
+        .delete(`/${collectionName}/:id`, cors, async(ctx) => {
+
+            let selecter = { _id: ctx.params.id }
+
+            const { result } = await dao.delete(collectionName, selecter)
+
+            if (result.ok > 0) {
+                ctx.body = this.repsonse(200, { affect: result.n }, 'success')
+            } else {
+                ctx.body = this.repsonse(200, { affect: result.n }, 'fail')
+            }
+
+        })
+
+
+    function response(code, data, msg, type = 'json') {
         if (type === 'json') {
             return {
                 code,
