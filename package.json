@@ -1,6 +1,6 @@
 {
   "name": "sp-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple api custom for sp-base.",
   "main": "index.js",
   "scripts": {
@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/dongwenxiao/sp-api/issues"
   },
-  "homepage": "https://github.com/dongwenxiao/sp-api#readme"
+  "homepage": "https://github.com/dongwenxiao/sp-api#readme",
+  "dependencies": {
+    "sp-cors-middleware": "^1.0.1"
+  }
 }
