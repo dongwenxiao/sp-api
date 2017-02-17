@@ -205,9 +205,9 @@ export function mountCrudRouter(collection, router, dao) {
             const { result } = await dao.delete(collectionName, selecter)
 
             if (result.ok > 0) {
-                ctx.body = this.repsonse(200, { affect: result.n }, 'success')
+                ctx.body = response(200, { affect: result.n }, 'success')
             } else {
-                ctx.body = this.repsonse(200, { affect: result.n }, 'fail')
+                ctx.body = response(200, { affect: result.n }, 'fail')
             }
 
         })
