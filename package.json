@@ -1,6 +1,6 @@
 {
   "name": "sp-api",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Simple api custom for sp-base.",
   "main": "index.js",
   "scripts": {
