@@ -76,6 +76,7 @@ export function mountCrudRouter(collection, router, dao) {
             //      key2: val2,
             //      skip: 5,    // 跳过5个记录
             //      limit: 10,  // 取10个记录
+            //      sort: { key: 1}  // key要排序的键值， 1升序，-1降序  eg: /api/person?sort=name:-1,age:-1
             //      filter: {   // 子集合过滤
             //          s_key: s_val
             //      }
@@ -84,13 +85,20 @@ export function mountCrudRouter(collection, router, dao) {
             let _query = {},
                 _skip,
                 _limit,
-                _filter
+                _filter,
+                _sort
 
             for (let key in ctx.query) {
                 if (key === 'skip') {
                     _skip = ctx.query[key] - 0
                 } else if (key === 'limit') {
                     _limit = ctx.query[key] - 0
+                } else if (key === 'sort') {
+                    _sort = {}
+                    ctx.query[key].split(',').forEach((str) => {
+                        let item = str.split(':')
+                        _sort[item[0]] = item[1] * 1
+                    })
                 } else {
                     let _val = ctx.query[key]
                     if (key.charAt(key.length - 1) === '!') {
@@ -111,11 +119,20 @@ export function mountCrudRouter(collection, router, dao) {
                 }
             }
 
+            // console.log({
+            //     _query,
+            //     _skip,
+            //     _limit,
+            //     _filter,
+            //     _sort
+            // })
+
             const result = await dao.find(collectionName, {
                 _query,
                 _skip,
                 _limit,
-                _filter
+                _filter,
+                _sort
             })
 
             ctx.body = response(200, result, '')
