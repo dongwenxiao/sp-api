@@ -1,6 +1,7 @@
-import { spMongoDB } from 'sp-mongo'
-import cors from 'sp-cors-middleware'
 import Router from 'koa-router'
+import { spMongoDB } from 'sp-mongo'
+import { spResponse, RES_SUCCESS, RES_FAIL_OPERATE } from 'sp-response'
+import cors from 'sp-cors-middleware'
 
 export default class spApi {
 
@@ -50,7 +51,6 @@ export default class spApi {
     add(collection) {
         mountCrudRouter(collection, this.router, this.dao)
     }
-
 }
 
 export function mountCrudRouter(collection, router, dao) {
@@ -68,7 +68,7 @@ export function mountCrudRouter(collection, router, dao) {
         .options('*', cors, async(ctx) => {
             ctx.status = 204
         })
-        .get(`/${collectionName}`, cors, async(ctx) => {
+        .get(`/${collectionName}`, cors, spResponse, async(ctx) => {
 
             // 请求参数
             // {
@@ -135,9 +135,9 @@ export function mountCrudRouter(collection, router, dao) {
                 _sort
             })
 
-            ctx.body = response(200, result, '')
+            ctx.spResponse(RES_SUCCESS, result, '')
         })
-        .get(`/${collectionName}/:id`, cors, async(ctx) => {
+        .get(`/${collectionName}/:id`, cors, spResponse, async(ctx) => {
 
             let _query = { _id: ctx.params.id }
 
@@ -145,9 +145,9 @@ export function mountCrudRouter(collection, router, dao) {
                 _query
             })
 
-            ctx.body = response(200, result[0], '')
+            ctx.spResponse(RES_SUCCESS, result[0], '')
         })
-        .post(`/${collectionName}`, cors, async(ctx) => {
+        .post(`/${collectionName}`, cors, spResponse, async(ctx) => {
             let data = ctx.request.body
 
             /*
@@ -160,16 +160,14 @@ export function mountCrudRouter(collection, router, dao) {
             const result = await dao.insert(collectionName, data)
 
             if (result.result.ok === 1) {
-                ctx.body = response(200, {
+                ctx.spResponse(RES_SUCCESS, {
                     id: result.insertedIds[1]
                 }, 'success')
             } else {
-                ctx.body = response(200, {
-                    id: ''
-                }, 'fail')
+                ctx.spResponse(RES_FAIL_OPERATE, {}, 'fail')
             }
         })
-        .put(`/${collectionName}`, cors, async(ctx) => {
+        .put(`/${collectionName}`, cors, spResponse, async(ctx) => {
             let selecter = {},
                 doc = ctx.request.body
 
@@ -188,13 +186,13 @@ export function mountCrudRouter(collection, router, dao) {
             const { result } = await dao.update(collection, selecter, doc)
 
             if (result.ok > 0) {
-                ctx.body = response(200, { affect: result.n }, 'success')
+                ctx.spResponse(RES_SUCCESS, { affect: result.n }, 'success')
             } else {
-                ctx.body = response(200, { affect: result.n }, 'fail')
+                ctx.spResponse(RES_FAIL_OPERATE, { affect: result.n }, 'fail')
             }
 
         })
-        .put(`/${collectionName}/:id`, cors, async(ctx) => {
+        .put(`/${collectionName}/:id`, cors, spResponse, async(ctx) => {
 
             let selecter = { _id: ctx.params.id },
                 doc = ctx.request.body
@@ -210,92 +208,23 @@ export function mountCrudRouter(collection, router, dao) {
             const { result } = await dao.update(collectionName, selecter, doc)
 
             if (result.ok > 0) {
-                ctx.body = response(200, { affect: result.n }, 'success')
+                ctx.spResponse(RES_SUCCESS, { affect: result.n }, 'success')
             } else {
-                ctx.body = response(200, { affect: result.n }, 'fail')
+                ctx.spResponse(RES_FAIL_OPERATE, { affect: result.n }, 'fail')
             }
         })
-        .delete(`/${collectionName}/:id`, cors, async(ctx) => {
+        .delete(`/${collectionName}/:id`, cors, spResponse, async(ctx) => {
 
             let selecter = { _id: ctx.params.id }
 
             const { result } = await dao.delete(collectionName, selecter)
 
             if (result.ok > 0) {
-                ctx.body = response(200, { affect: result.n }, 'success')
+                ctx.spResponse(RES_SUCCESS, { affect: result.n }, 'success')
             } else {
-                ctx.body = response(200, { affect: result.n }, 'fail')
+                ctx.spResponse(RES_FAIL_OPERATE, { affect: result.n }, 'fail')
             }
 
         })
 
-
-    function response(code, data, msg, type = 'json') {
-        if (type === 'json') {
-            return {
-                code,
-                data,
-                msg
-            }
-        }
-    }
 }
-
-
-// 1 消息（1字头）
-// ▪ 100 Continue
-// ▪ 101 Switching Protocols
-// ▪ 102 Processing
-// 2 成功（2字头）
-// ▪ 200 OK
-// ▪ 201 Created
-// ▪ 202 Accepted
-// ▪ 203 Non-Authoritative Information
-// ▪ 204 No Content
-// ▪ 205 Reset Content
-// ▪ 206 Partial Content
-// 3 重定向（3字头）
-// ▪ 300 Multiple Choices
-// ▪ 301 Moved Permanently
-// ▪ 302 Move temporarily
-// ▪ 303 See Other
-// ▪ 304 Not Modified
-// ▪ 305 Use Proxy
-// ▪ 306 Switch Proxy
-// ▪ 307 Temporary Redirect
-// 4 请求错误（4字头）
-// ▪ 400 Bad Request
-// ▪ 401 Unauthorized
-// ▪ 403 Forbidden
-// ▪ 404 Not Found
-// ▪ 405 Method Not Allowed
-// ▪ 406 Not Acceptable
-// ▪ 407 Proxy Authentication Required
-// ▪ 408 Request Timeout
-// ▪ 409 Conflict
-// ▪ 410 Gone
-// ▪ 411 Length Required
-// ▪ 412 Precondition Failed
-// ▪ 413 Request Entity Too Large
-// ▪ 414 Request-URI Too Long
-// ▪ 415 Unsupported Media Type
-// ▪ 416 Requested Range Not Satisfiable
-// ▪ 417 Expectation Failed
-// ▪ 422 Unprocessable Entity
-// ▪ 423 Locked
-// ▪ 424 Failed Dependency
-// ▪ 425 Unordered Collection
-// ▪ 426 Upgrade Required
-// ▪ 449 Retry With
-// 5 服务器错误（5、6字头）
-// ▪ 500 Internal Server Error
-// ▪ 501 Not Implemented
-// ▪ 502 Bad Gateway
-// ▪ 503 Service Unavailable
-// ▪ 504 Gateway Timeout
-// ▪ 505 HTTP Version Not Supported
-// ▪ 506 Variant Also Negotiates
-// ▪ 507 Insufficient Storage
-// ▪ 509 Bandwidth Limit Exceeded
-// ▪ 510 Not Extended
-// ▪ 600 Unparseable Response Headers
